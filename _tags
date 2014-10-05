@@ -1,0 +1,3 @@
+true: package(lwt.syntax,cohttp.lwt,yojson,atdgen)
+<src/*.ml>: annot
+true: thread
