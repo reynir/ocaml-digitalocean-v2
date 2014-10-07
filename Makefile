@@ -2,7 +2,7 @@ OCAMLBUILD=ocamlbuild -use-ocamlfind
 
 all: main.native
 
-main.native: src/main.ml
+main.native: src/*.ml
 	${OCAMLBUILD} src/main.native
 
 clean:

@@ -9,23 +9,24 @@ module Make (Token : TOKEN) =
   struct
     open Token
 
-    let make_url obj : Uri.t =
+    let make_url ~query ~resource : Uri.t =
       Uri.make ~scheme:"https"
                ~host:"api.digitalocean.com"
-               ~path:("/v2/" ^ obj)
-               ~query:[("per_page", ["1000"])]
+               ~path:("/v2/" ^ resource)
+               ~query
                ()
 
-    let get ?headers:h ~resource =
+    let get ?headers:h ?query:(query=[]) resource =
       let headers = (match h with
         | None -> Cohttp.Header.init ()
         | Some h -> h) in
       let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
-      Cohttp_lwt_unix.Client.get ~headers (make_url resource)
+      Cohttp_lwt_unix.Client.get ~headers (make_url ~query ~resource)
 
-    let get_actions : string Lwt.t =
-      print_endline (Uri.to_string (make_url "actions"));
-      get "actions"
-      >>= fun (resp, body) ->
-      Cohttp_lwt_body.to_string body
+    let actions =
+      get ~query:(["per_page", ["10"]; "page", ["2"]])
+          "actions"
+
+    let droplets =
+      get "droplets"
   end
