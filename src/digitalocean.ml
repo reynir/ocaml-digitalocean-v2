@@ -1,11 +1,11 @@
 open Lwt
 
-module type TOKEN =
+module type AUTH_TOKEN =
   sig
     val token : string
   end
 
-module Make (Token : TOKEN) =
+module Make (Token : AUTH_TOKEN) =
   struct
     open Token
 
