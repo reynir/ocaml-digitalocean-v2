@@ -21,15 +21,11 @@ let json_of_response ((resp, body) : Cohttp.Response.t * Cohttp_lwt_body.t)
   Cohttp_lwt_body.to_string body
   >|= Yojson.Safe.from_string
 
-let is_paginated (r : Yojson.Safe.json) : bool =
-  match Responses.paginated_of_yojson r with
-  | `Error _ -> false
-  | `Ok _ -> true
-
 let next_page (json : Yojson.Safe.json) : string option =
   let open Responses in
-  match or_die paginated_of_yojson json with
-    { links = { pages = { next } } } -> next
+  match paginated_of_yojson json with
+  | `Error _ -> None
+  | `Ok { links = { pages = { next } } } -> next
 
 let mk_url ?query:(query=[]) ~resource : Uri.t =
   Uri.make ~scheme:"https"
@@ -55,11 +51,9 @@ module Make (Token : Token.AUTH_TOKEN) =
               get url >>= json_of_response
               >>= fun json ->
               let xs = parse json in
-              if is_paginated json
-              then match next_page json with
+              match next_page json with
                    | Some url -> return (Some xs, loop (Uri.of_string url))
-                   | None -> return (Some xs, End)
-              else return (Some xs, End))
+                   | None -> return (Some xs, End))
       in Lwt_stream.flatten (lwt_stream_of_my_stream (loop url))
 
     let actions () : Responses.action Lwt_stream.t =
