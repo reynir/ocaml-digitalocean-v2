@@ -52,13 +52,7 @@ module Make (Token : Token.AUTH_TOKEN) =
       let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
       Cohttp_lwt_unix.Client.get ~headers url
 
-    let actions () =
-      get (mk_url "actions")
-      >>= json_of_response
-      >|= fun json ->
-      Responses.or_die Responses.actions_of_yojson json
-
-    let actions_stream () =
+    let actions () : Responses.action Lwt_stream.t =
       let rec loop url : Responses.action list my_stream =
         Next (fun () ->
               get url >>= json_of_response
@@ -70,7 +64,7 @@ module Make (Token : Token.AUTH_TOKEN) =
               | None -> return (Some xs, End))
       in Lwt_stream.flatten (lwt_stream_of_my_stream (loop (mk_url "actions")))
 
-    let actions_all () = Lwt_stream.to_list (actions_stream ())
+    let actions_list () = Lwt_stream.to_list (actions ())
 
     let droplets () =
       get (mk_url "droplets")
