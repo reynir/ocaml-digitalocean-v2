@@ -26,13 +26,10 @@ let is_paginated (r : Yojson.Safe.json) : bool =
   | `Error _ -> false
   | `Ok _ -> true
 
-let next_page (r : Yojson.Safe.json) : string option =
-  match Responses.paginated_of_yojson r with
-  | `Error s -> failwith s
-  | `Ok { Responses.links =
-            { Responses.pages =
-                { Responses.next } } } ->
-     next
+let next_page (json : Yojson.Safe.json) : string option =
+  let open Responses in
+  match or_die paginated_of_yojson json with
+    { links = { pages = { next } } } -> next
 
 let mk_url ?query:(query=[]) ~resource : Uri.t =
   Uri.make ~scheme:"https"
