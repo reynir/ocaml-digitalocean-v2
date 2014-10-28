@@ -3,11 +3,12 @@ open Lwt_io
 
 let main : unit Lwt.t =
   Util.get_token
-  >>= fun token ->
-  let module DO = Digitalocean.Make(struct let token = token end) in
-  DO.actions
-  >>= Util.string_of_response
-  >>= printl
+  >>= fun (module Auth_token) ->
+  let module DO = Digitalocean.Make(Auth_token) in
+  DO.actions_all
+  >>= fun xs -> 
+  Yojson.Safe.to_string (`List xs)
+  |> printl
 
 let () =
   Lwt_main.run main

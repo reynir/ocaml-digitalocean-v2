@@ -1,3 +1,4 @@
-true: package(lwt.syntax,cohttp.lwt,yojson,atdgen)
-<src/*.ml>: annot, syntax(camlp4o)
+true: package(cohttp.lwt,yojson,ppx_deriving_yojson)
+true: bin_annot
+"src/util.ml": package(lwt.ppx)
 true: thread

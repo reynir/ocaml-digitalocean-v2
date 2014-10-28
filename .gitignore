@@ -1,1 +1,4 @@
 token
+_build/
+main.native
+*~
