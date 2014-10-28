@@ -49,17 +49,23 @@ module Make (Token : Token.AUTH_TOKEN) =
       let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
       Cohttp_lwt_unix.Client.get ~headers url
 
-    let actions () : Responses.action Lwt_stream.t =
-      let rec loop url : Responses.action list my_stream =
+    let paginated (parse : Yojson.Safe.json -> 'a list) url : 'a Lwt_stream.t =
+      let rec loop url : 'a list my_stream =
         Next (fun () ->
               get url >>= json_of_response
               >>= fun json ->
-              let xs = Responses.((or_die actions_of_yojson json).actions) in
-              match next_page json with
-              | Some url ->
-                 return (Some xs, (loop (Uri.of_string url)))
-              | None -> return (Some xs, End))
-      in Lwt_stream.flatten (lwt_stream_of_my_stream (loop (mk_url "actions")))
+              let xs = parse json in
+              if is_paginated json
+              then match next_page json with
+                   | Some url -> return (Some xs, loop (Uri.of_string url))
+                   | None -> return (Some xs, End)
+              else return (Some xs, End))
+      in Lwt_stream.flatten (lwt_stream_of_my_stream (loop url))
+
+    let actions () : Responses.action Lwt_stream.t =
+      paginated (fun json ->
+                 Responses.((or_die actions_of_yojson json).actions))
+                (mk_url "actions")
 
     let actions_list () = Lwt_stream.to_list (actions ())
 
