@@ -1,5 +1,7 @@
-let or_die = function
-  | `Error error_msg -> failwith error_msg
+exception Bad_response of (string * Yojson.Safe.json)
+
+let or_die parse json = match parse json with
+  | `Error error_msg -> raise (Bad_response (error_msg, json))
   | `Ok res -> res
 
 type pages = {

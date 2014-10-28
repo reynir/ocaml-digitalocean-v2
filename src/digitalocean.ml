@@ -1,5 +1,26 @@
 open Lwt
 
+type 'a my_stream = Next of (unit -> ('a option * 'a my_stream) Lwt.t)
+                  | End
+
+let lwt_stream_of_my_stream (s : 'a my_stream) : 'a Lwt_stream.t =
+  let next = ref s in
+  Lwt_stream.from
+    (fun () ->
+     match !next with
+     | End -> return None
+     | Next f ->
+        f ()
+        >>= function
+          | (x, s') ->
+             next := s';
+             return x)
+
+let json_of_response ((resp, body) : Cohttp.Response.t * Cohttp_lwt_body.t)
+    : Yojson.Safe.json Lwt.t =
+  Cohttp_lwt_body.to_string body
+  >|= Yojson.Safe.from_string
+
 let is_paginated (r : Yojson.Safe.json) : bool =
   match Responses.paginated_of_yojson r with
   | `Error _ -> false
@@ -13,16 +34,16 @@ let next_page (r : Yojson.Safe.json) : string option =
                 { Responses.next } } } ->
      next
 
+let mk_url ?query:(query=[]) ~resource : Uri.t =
+  Uri.make ~scheme:"https"
+           ~host:"api.digitalocean.com"
+           ~path:("/v2/" ^ resource)
+           ~query
+           ()
+
 module Make (Token : Token.AUTH_TOKEN) =
   struct
     open Token
-
-    let mk_url ?query:(query=[]) ~resource : Uri.t =
-      Uri.make ~scheme:"https"
-               ~host:"api.digitalocean.com"
-               ~path:("/v2/" ^ resource)
-               ~query
-               ()
 
     let get ?headers:h ~url =
       let headers = (match h with
@@ -31,30 +52,26 @@ module Make (Token : Token.AUTH_TOKEN) =
       let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
       Cohttp_lwt_unix.Client.get ~headers url
 
-    let actions =
-      get (mk_url ~query:(["per_page", ["2"]; "page", ["2"]])
-                    ~resource:"actions")
-      >>= Util.string_of_response
-      >>= fun s ->
-      Yojson.Safe.from_string s
-      |> Responses.actions_of_yojson
-      |> Responses.or_die
-      |> return
+    let actions () =
+      get (mk_url "actions")
+      >>= json_of_response
+      >|= fun json ->
+      Responses.or_die Responses.actions_of_yojson json
 
-    let actions_all =
-      let rec loop url =
-        get url
-        >>= Util.json_of_response
-        >>= fun json ->
-        let xs = match Responses.actions_of_yojson json with
-          | `Error s -> failwith s
-          | `Ok { Responses.actions } -> actions in
-        match next_page json with (* /actions is always paginated *)
-        | Some url ->
-           loop (Uri.of_string url) >|= (@) xs
-        | None -> return xs
-      in loop (mk_url ~query:[] ~resource:"actions")
+    let actions_stream () =
+      let rec loop url : Responses.action list my_stream =
+        Next (fun () ->
+              get url >>= json_of_response
+              >>= fun json ->
+              let xs = Responses.((or_die actions_of_yojson json).actions) in
+              match next_page json with
+              | Some url ->
+                 return (Some xs, (loop (Uri.of_string url)))
+              | None -> return (Some xs, End))
+      in Lwt_stream.flatten (lwt_stream_of_my_stream (loop (mk_url "actions")))
 
-    let droplets =
+    let actions_all () = Lwt_stream.to_list (actions_stream ())
+
+    let droplets () =
       get (mk_url "droplets")
   end
