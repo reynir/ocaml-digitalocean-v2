@@ -64,5 +64,8 @@ module Make (Token : Token.AUTH_TOKEN) =
     let actions_list () = Lwt_stream.to_list (actions ())
 
     let droplets () =
-      get (mk_url "droplets")
+      paginated
+        (fun json ->
+         Responses.((or_die droplets_of_yojson json).droplets))
+        (mk_url "droplets")
   end
