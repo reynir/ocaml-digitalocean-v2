@@ -1,9 +1,6 @@
 open Lwt
 open Lwt_io
 
-let (>>-) a b = a >>= fun _ -> b
-
-
 module DO = Digitalocean.Make((val (Lwt_main.run Util.get_token)))
 
 let print_actions () : unit Lwt.t =
