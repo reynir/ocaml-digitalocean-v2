@@ -15,9 +15,31 @@ let print_droplets () : unit Lwt.t =
                                |> Yojson.Safe.pretty_to_string
                                |> print_endline)
 
+let print_domains () : unit Lwt.t =
+  DO.domains ()
+  |> Lwt_stream.iter (fun x -> Responses.domain_to_yojson x
+                               |> Yojson.Safe.pretty_to_string
+                               |> print_endline)
+
+let print_domain_records domain =
+  DO.domain_records domain
+  |> Lwt_stream.iter (fun x -> Responses.domain_record_to_yojson x
+                               |> Yojson.Safe.pretty_to_string
+                               |> print_endline)
+
 let main : unit Lwt.t =
   print_actions ()
   >>= print_droplets
+  >>= print_domains
+  >>= fun () ->
+  DO.domains ()
+  |> Lwt_stream.get
+  >>= begin function
+        | None ->return ()
+        | Some { Responses.name; _ } -> 
+           print_domain_records name
+      end
+
 let () =
   try
     Lwt_main.run main

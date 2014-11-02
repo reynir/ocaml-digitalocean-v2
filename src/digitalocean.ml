@@ -68,4 +68,16 @@ module Make (Token : Token.AUTH_TOKEN) =
         (fun json ->
          Responses.((or_die droplets_of_yojson json).droplets))
         (mk_url "droplets")
+
+    let domains () =
+      paginated
+        (fun json ->
+         Responses.((or_die domains_of_yojson json).domains))
+        (mk_url "domains")
+
+    let domain_records (domain : string) =
+      paginated
+        (fun json ->
+         Responses.((or_die domain_records_of_yojson json).domain_records))
+        (mk_url ("domains/"^domain^"/records"))
   end

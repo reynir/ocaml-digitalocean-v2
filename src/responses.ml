@@ -67,3 +67,27 @@ type droplet = {
 type droplets = {
   droplets : droplet list;
 } [@@deriving yojson { strict = false }]
+
+type domain = {
+  name : string;
+  ttl : number;
+  zone_file : string;
+} [@@deriving yojson { strict = false }]
+
+type domains = {
+  domains : domain list;
+} [@@deriving yojson { strict = false }]
+
+type domain_record = {
+  id : number;
+  typ [@key "type"] : string;
+  name : string;
+  data : string;
+  priority : number option;
+  port : number option;
+  weight : number option;
+} [@@deriving yojson { strict = false }]
+
+type domain_records = {
+  domain_records : domain_record list;
+} [@@deriving yojson { strict = false }]
