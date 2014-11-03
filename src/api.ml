@@ -75,9 +75,10 @@ module Make (Token : Token.AUTH_TOKEN) =
          Responses.((or_die domains_of_yojson json).domains))
         (mk_url "domains")
 
-    let domain_records (domain : string) =
+    let domain_records (domain : string)  =
       paginated
         (fun json ->
-         Responses.((or_die domain_records_of_yojson json).domain_records))
+         Responses.((or_die domain_records_of_yojson json).domain_records)
+        |> List.map Records.record_of_domain_record)
         (mk_url ("domains/"^domain^"/records"))
   end

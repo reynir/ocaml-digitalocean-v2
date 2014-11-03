@@ -1,7 +1,7 @@
 open Lwt
 open Lwt_io
 
-module DO = Digitalocean.Make((val (Lwt_main.run Util.get_token)))
+module DO = Api.Make((val (Lwt_main.run Util.get_token)))
 
 let print_actions () : unit Lwt.t =
   DO.actions ()
@@ -23,8 +23,7 @@ let print_domains () : unit Lwt.t =
 
 let print_domain_records domain =
   DO.domain_records domain
-  |> Lwt_stream.iter (fun x -> Responses.domain_record_to_yojson x
-                               |> Yojson.Safe.pretty_to_string
+  |> Lwt_stream.iter (fun x -> Records.show_record x
                                |> print_endline)
 
 let main : unit Lwt.t =
@@ -39,6 +38,7 @@ let main : unit Lwt.t =
         | Some { Responses.name; _ } -> 
            print_domain_records name
       end
+
 
 let () =
   try

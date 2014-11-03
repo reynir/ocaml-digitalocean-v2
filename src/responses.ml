@@ -7,7 +7,7 @@ let or_die parse json = match parse json with
 (** Some common types **)
 (* The type 'number' seems to always be an integer *)
 type number = int
-[@@deriving yojson]
+[@@deriving yojson, show]
 
 (* "object" in the documentation *)
 type objekt = Yojson.Safe.json

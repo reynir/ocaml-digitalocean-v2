@@ -6,4 +6,6 @@ B _build/src
 PKG cohttp.lwt
 PKG yojson
 PKG ppx_deriving
+PKG ppx_deriving_yojson
+PKG ppx_deriving.show
 PKG lwt.ppx
