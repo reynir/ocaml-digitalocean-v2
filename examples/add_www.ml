@@ -18,12 +18,6 @@ let do_add domain_name : unit Lwt.t =
         >>= fun _ ->
         Lwt_io.printl ("Www added to "^domain_name^"!")
 
-let add_all () : unit Lwt.t =
-  DO.domains ()
-  |> Lwt_stream.iter_p
-       (fun ({ Responses.name = domain_name; _ } : Responses.domain) ->
-        do_add domain_name)
-
 let do_remove domain_name : unit Lwt.t =
   DO.domain_records domain_name
   |> Lwt_stream.iter_p 
@@ -37,35 +31,27 @@ let do_remove domain_name : unit Lwt.t =
             return ()
          | _ -> return ())
 
-let remove_all () : unit Lwt.t =
+let do_all f : unit Lwt.t =
   DO.domains ()
   |> Lwt_stream.iter_p
        (fun ({ Responses.name = domain_name; _ } : Responses.domain) ->
-        do_remove domain_name)
+        f domain_name)
 
 let domain_opt =
-  Cmdliner.Arg.(value @@ opt_all string [] @@ info ["DOMAIN"])
+  Cmdliner.Arg.(value @@ pos_all string [] @@ info [] ~docv:"DOMAIN")
 
-let add (domains : string list) =
+let do_it f (domains : string list) =
   match domains with
-  | [] -> add_all ()
-  | _ -> Lwt_list.iter_p do_add domains
+  | [] -> do_all f
+  | _ -> Lwt_list.iter_p f domains
 
-let add_cmd =
-  Cmdliner.Term.(pure add $ domain_opt)
-
-let remove (domains : string list) =
-  match domains with
-  | [] -> remove_all ()
-  | _ -> Lwt_list.iter_p do_remove domains
-
-let remove_cmd =
-  Cmdliner.Term.(pure remove $ domain_opt)
+let do_cmd f =
+  Cmdliner.Term.(pure (do_it f) $ domain_opt)
 
 let cmd = Cmdliner.Term.eval_choice
-            (add_cmd, Cmdliner.Term.info "add")
-            [add_cmd, Cmdliner.Term.info "add";
-             remove_cmd, Cmdliner.Term.info "remove"]
+            (do_cmd do_add, Cmdliner.Term.info "www")
+            [do_cmd do_add, Cmdliner.Term.info "add";
+             do_cmd do_remove, Cmdliner.Term.info "remove"]
 
 let () =
   cmd
