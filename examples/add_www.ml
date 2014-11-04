@@ -49,9 +49,23 @@ let do_cmd f =
   Cmdliner.Term.(pure (do_it f) $ domain_opt)
 
 let cmd = Cmdliner.Term.eval_choice
-            (do_cmd do_add, Cmdliner.Term.info "www")
-            [do_cmd do_add, Cmdliner.Term.info "add";
-             do_cmd do_remove, Cmdliner.Term.info "remove"]
+            (do_cmd do_add, Cmdliner.Term.info
+                              ~doc:"Add or remove WWW records"
+                              ~man:[`S "DESCRIPTION";
+                                    `P "If no command are given then a WWW \
+                                        CNAME is added for each domain without \
+                                        a WWW A or CNAME record."]
+                              "www")
+            [do_cmd do_add, Cmdliner.Term.info
+                              ~doc:"Adds a www CNAME record for specified \
+                                    domains, or all domains if none are \
+                                    specified."
+                              "add";
+             do_cmd do_remove, Cmdliner.Term.info
+                                 ~doc:"Removes WWW records for specified \
+                                       domains, or all domains if none are \
+                                       specified."
+                                 "remove"]
 
 let () =
   cmd
