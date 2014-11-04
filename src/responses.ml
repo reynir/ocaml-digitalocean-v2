@@ -93,6 +93,10 @@ type domain_record = {
   weight : number option;
 } [@@deriving yojson { strict = false }]
 
+type domain_record_wrapper = {
+  domain_record : domain_record;
+} [@@deriving yojson { strict = false }]
+
 type domain_records = {
   domain_records : domain_record list;
 } [@@deriving yojson { strict = false }]
