@@ -65,16 +65,20 @@ module Make (Token : Token.AUTH_TOKEN) =
       let res = Cohttp_lwt_unix.Client.delete ~headers url in
       res >>= check_response ~expected:[`No_content] >>= fun () -> res
 
-    let paginated (parse : Yojson.Safe.json -> 'a list) url : 'a Lwt_stream.t =
-      let open Stream_wrapper in
-      let rec loop url : 'a list my_stream =
-        Next (fun () ->
-              get url >>= json_of_response
-              >>= fun json ->
-              let xs = parse json in
-              match next_page json with
-              | Some url -> return (Some xs, loop (Uri.of_string url))
-              | None -> return (Some xs, End))
-      in Lwt_stream.flatten (lwt_stream_of_my_stream (loop url))
+    let paginated (parse: Yojson.Safe.json -> 'a list) (url : Uri.t) : 'a Lwt_stream.t =
+      let next_url = ref (Some url) in
+      let next () : 'a list option Lwt.t =
+        match !next_url with
+        | None -> return_none
+        | Some url ->
+          get url
+          >>= json_of_response
+          >>= fun json ->
+          let xs = parse json in
+          let () = match next_page json with
+            | Some new_url -> next_url := Some (Uri.of_string new_url)
+            | None -> next_url := None in
+          return (Some xs) in
+      Lwt_stream.from next |> Lwt_stream.flatten
 
   end
