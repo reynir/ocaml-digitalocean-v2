@@ -13,6 +13,11 @@ type number = int
 type objekt = Yojson.Safe.json
 [@@deriving yojson]
 
+(* For error responses *)
+type error = Yojson.Safe.json
+[@@deriving yojson]
+  
+
 type pages = {
   first : string option [@default None];
   next : string option [@default None];

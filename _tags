@@ -1,4 +1,5 @@
 true: package(cohttp.lwt,yojson,ppx_deriving,ppx_deriving_yojson,ppx_deriving.show)
 true: bin_annot
 "src/util.ml": package(lwt.ppx)
+<src>: include
 true: thread

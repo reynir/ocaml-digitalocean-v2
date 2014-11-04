@@ -38,12 +38,43 @@ module Make (Token : Token.AUTH_TOKEN) =
   struct
     open Token
 
-    let get ?headers:h ~url =
-      let headers = (match h with
-        | None -> Cohttp.Header.init ()
-        | Some h -> h) in
+    let check_response ((resp, body) : Cohttp_lwt_unix.Response.t * Cohttp_lwt_body.t) =
+      let module Resp = Cohttp_lwt_unix.Response in
+      let status = Cohttp_lwt_unix.Response.status resp in
+      match status with
+      | `OK -> return ()
+      | _ -> let status_string = Cohttp.Code.string_of_status status in
+             Printf.fprintf stderr "Error code: %s\n" status_string;
+             json_of_response (resp, body)
+             >>= fun json ->
+             raise @@ Responses.Bad_response
+                        (Printf.sprintf "Error code %s" status_string,
+                         json)
+
+    let get ?headers:(headers=Cohttp.Header.init ()) ~url =
       let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
-      Cohttp_lwt_unix.Client.get ~headers url
+      let res = Cohttp_lwt_unix.Client.get ~headers url in
+      res >>= check_response >>= fun () -> res
+
+    let post ?headers:(headers=Cohttp.Header.init ()) ~url ~data =
+      let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
+      let body = Cohttp_lwt_body.of_string data in
+      let res = Cohttp_lwt_unix.Client.post ~body ~headers url in
+      res >>= check_response >>= fun () -> res
+
+    let post_json ?headers:(headers=Cohttp.Header.init ()) ~url ~json =
+      let headers = Cohttp.Header.add headers "Content-Type" "application/json" in
+      let data = Yojson.Safe.to_string json in
+      let res = post ~headers ~url ~data in
+      res >>= check_response >>= fun () -> res
+
+    let delete ?headers:(headers=Cohttp.Header.init ()) ~url =
+      let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
+      let headers =
+        Cohttp.Header.add headers
+                          "Content-Type" "application/x-www-form-urlencoded" in
+      let res = Cohttp_lwt_unix.Client.delete ~headers url in
+      res >>= check_response >>= fun () -> res
 
     let paginated (parse : Yojson.Safe.json -> 'a list) url : 'a Lwt_stream.t =
       let rec loop url : 'a list my_stream =
@@ -81,4 +112,13 @@ module Make (Token : Token.AUTH_TOKEN) =
          Responses.((or_die domain_records_of_yojson json).domain_records)
         |> List.map Records.record_of_domain_record)
         (mk_url ("domains/"^domain^"/records"))
+
+    let add_CNAME domain_name ~domain ~host =
+      post_json (mk_url ("domains/" ^ domain_name ^ "/records"))
+                (`Assoc ["type", `String "CNAME";
+                         "name", `String domain;
+                         "data", `String host;])
+
+    let delete_record domain_name id =
+      delete (mk_url ("domains/"^domain_name^"/records/"^string_of_int id))
   end
