@@ -54,21 +54,21 @@ type record =
 exception Bad_record of Responses.domain_record
 
 let record_of_domain_record =
-  Responses.(function
-              | { typ = "A"; id; name; data; _ } ->
-                 A { id; domain = name; ipv4 = data }
-              | { typ = "AAAA"; id; name; data; _ } ->
-                 AAAA { id; domain = name; ipv6 = data }
-              | { typ = "CNAME"; id; name; data; _ } ->
-                 CNAME { id; domain = name; host = data }
-              | { typ = "MX"; id; name; data; priority = Some p } ->
-                 MX { id; domain = name; exchange = data; preference = p }
-              | { typ = "TXT"; id; name; data; _ } ->
-                 TXT { id; name; data }
-              | { typ = "SRV"; id; name; data;
-                  port = Some port; priority = Some priority;
-                  weight = Some weight; } ->
-                 SRV { id; domain = name; target = data; port; priority; weight }
-              | { typ = "NS"; id; name; data; _ } -> 
-                 NS { id; domain = name; host = data; }
-              | r -> raise (Bad_record r))
+  function
+  | { Responses.typ = "A"; id; name; data; _ } ->
+     A { id; domain = name; ipv4 = data }
+  | { Responses.typ = "AAAA"; id; name; data; _ } ->
+     AAAA { id; domain = name; ipv6 = data }
+  | { Responses.typ = "CNAME"; id; name; data; _ } ->
+     CNAME { id; domain = name; host = data }
+  | { Responses.typ = "MX"; id; name; data; priority = Some p } ->
+     MX { id; domain = name; exchange = data; preference = p }
+  | { Responses.typ = "TXT"; id; name; data; _ } ->
+     TXT { id; name; data }
+  | { Responses.typ = "SRV"; id; name; data;
+      port = Some port; priority = Some priority;
+      weight = Some weight; } ->
+     SRV { id; domain = name; target = data; port; priority; weight }
+  | { Responses.typ = "NS"; id; name; data; _ } -> 
+     NS { id; domain = name; host = data; }
+  | r -> raise (Bad_record r)
