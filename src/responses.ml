@@ -41,7 +41,7 @@ type action = {
   started_at : string;
   completed_at : string;
   resource_id : number option;
-  region : string option;
+  region : objekt;
 } [@@deriving yojson { strict = false }]
 
 type actions = {
