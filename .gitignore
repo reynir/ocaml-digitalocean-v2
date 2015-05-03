@@ -1,4 +1,6 @@
 token
 _build/
 main.native
+update-A.native
+www.native
 *~
