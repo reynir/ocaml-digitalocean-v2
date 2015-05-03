@@ -7,6 +7,8 @@ let mk_url ?query:(query=[]) ~resource : Uri.t =
            ~query
            ()
 
+let (/) a b = a ^ "/" ^ b
+
 module Make (Token : Token.AUTH_TOKEN) =
   struct
     module M = Methods.Make(Token)
@@ -35,10 +37,10 @@ module Make (Token : Token.AUTH_TOKEN) =
         (fun json ->
          Responses.((or_die domain_records_of_yojson json).domain_records)
          |> List.map Records.record_of_domain_record)
-        (mk_url ("domains/"^domain^"/records"))
+        (mk_url ("domains" / domain / "records"))
 
     let add_CNAME domain_name ~domain ~host =
-      M.post_json (mk_url ("domains/" ^ domain_name ^ "/records"))
+      M.post_json (mk_url ("domains" / domain_name / "records"))
                   (`Assoc ["type", `String "CNAME";
                            "name", `String domain;
                            "data", `String host;])
@@ -47,6 +49,24 @@ module Make (Token : Token.AUTH_TOKEN) =
           Responses.((or_die domain_record_wrapper_of_yojson json).domain_record)
           |> Records.record_of_domain_record
 
+    let add_A domain_name ~domain ~address =
+      M.post_json (mk_url ("domains" / domain_name / "records"))
+                  (`Assoc ["type", `String "A";
+                           "name", `String domain;
+                           "data", `String address;])
+      >>= M.json_of_response
+      >|= fun json ->
+          Responses.((or_die domain_record_wrapper_of_yojson json).domain_record)
+          |> Records.record_of_domain_record
+
+    let update_record_data domain_name id data =
+      M.put_json (mk_url ("domains" / domain_name / "records" / string_of_int id))
+                 (`Assoc ["data", `String data])
+      >>= M.json_of_response
+      >|= fun json ->
+          Responses.((or_die domain_record_wrapper_of_yojson json).domain_record)
+          |> Records.record_of_domain_record
+
     let delete_record domain_name id =
-      M.delete (mk_url ("domains/"^domain_name^"/records/"^string_of_int id))
+      M.delete (mk_url ("domains" / domain_name / "records" / string_of_int id))
   end

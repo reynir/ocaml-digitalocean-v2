@@ -46,6 +46,17 @@ module Make (Token : Token.AUTH_TOKEN) =
       let data = Yojson.Safe.to_string json in
       post ~headers ~url ~data
 
+    let put ?headers:(headers=Cohttp.Header.init ()) ~url ~data =
+      let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
+      let body = Cohttp_lwt_body.of_string data in
+      let res = Cohttp_lwt_unix.Client.put ~body ~headers url in
+      res >>= check_response >>= fun () -> res
+
+    let put_json ?headers:(headers=Cohttp.Header.init ()) ~url ~json =
+      let headers = Cohttp.Header.add headers "Content-Type" "application/json" in
+      let data = Yojson.Safe.to_string json in
+      put ~headers ~url ~data
+
     let delete ?headers:(headers=Cohttp.Header.init ()) ~url =
       let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
       let headers =
