@@ -6,7 +6,7 @@ module DO = Api.Make((val (Lwt_main.run Util.get_token)))
 let print_actions () : unit Lwt.t =
   DO.actions ()
   |> Lwt_stream.iter (fun x -> Responses.action_to_yojson x
-                               |> Yojson.Safe.to_string
+                               |> Yojson.Safe.pretty_to_string
                                |> print_endline)
 
 let print_droplets () : unit Lwt.t =
