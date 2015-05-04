@@ -34,10 +34,10 @@ let main : unit Lwt.t =
   DO.domains ()
   |> Lwt_stream.get
   >>= begin function
-        | None ->return ()
-        | Some { Responses.name; _ } -> 
-           print_domain_records name
-      end
+    | None ->return ()
+    | Some { Responses.name; _ } -> 
+      print_domain_records name
+  end
 
 
 let () =
@@ -46,8 +46,8 @@ let () =
   with Responses.Bad_response (err, json) ->
     Lwt_main.run
       begin fprintl stderr ("Bad_response: " ^ err)
-            >>= fun () ->
-            fprintl stderr ("JSON: " ^ Yojson.Safe.pretty_to_string json)
+        >>= fun () ->
+        fprintl stderr ("JSON: " ^ Yojson.Safe.pretty_to_string json)
       end;
     exit 1
-    
+
