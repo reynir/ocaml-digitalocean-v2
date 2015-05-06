@@ -30,9 +30,7 @@ let main : unit Lwt.t =
   print_actions ()
   >>= print_droplets
   >>= print_domains
-  >>= fun () ->
-  DO.domains ()
-  |> Lwt_stream.get
+  >> Lwt_stream.get (DO.domains ())
   >>= begin function
     | None -> return_unit
     | Some { Responses.name; _ } -> 
@@ -46,7 +44,7 @@ let () =
   with Responses.Bad_response (err, json) ->
     Lwt_main.run
       begin fprintl stderr ("Bad_response: " ^ err)
-        >>= fun () ->
+        >>
         fprintl stderr ("JSON: " ^ Yojson.Safe.pretty_to_string json)
       end;
     exit 1

@@ -22,7 +22,7 @@ let do_remove domain_name : unit Lwt.t =
       | Records.CNAME { Records.domain = "www"; id; _ }
       | Records.A {Records.domain = "www"; id; _ } ->
         Lwt_io.printl ("Www exists for "^domain_name^"! Removing...")
-        >>= fun () ->
+        >>
         let%lwt _ = DO.delete_record domain_name id in
         return_unit
       | _ -> return_unit)

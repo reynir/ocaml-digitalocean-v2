@@ -32,13 +32,13 @@ struct
   let get ?headers:(headers=Cohttp.Header.init ()) ~url =
     let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
     let res = Cohttp_lwt_unix.Client.get ~headers url in
-    res >>= check_response >>= fun () -> res
+    res >>= check_response >> res
 
   let post ?headers:(headers=Cohttp.Header.init ()) ~url ~data =
     let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
     let body = Cohttp_lwt_body.of_string data in
     let res = Cohttp_lwt_unix.Client.post ~body ~headers url in
-    res >>= check_response ~expected:[`Created] >>= fun () -> res
+    res >>= check_response ~expected:[`Created] >> res
 
   let post_json ?headers:(headers=Cohttp.Header.init ()) ~url ~json =
     let headers = Cohttp.Header.add headers "Content-Type" "application/json" in
@@ -49,7 +49,7 @@ struct
     let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
     let body = Cohttp_lwt_body.of_string data in
     let res = Cohttp_lwt_unix.Client.put ~body ~headers url in
-    res >>= check_response >>= fun () -> res
+    res >>= check_response >> res
 
   let put_json ?headers:(headers=Cohttp.Header.init ()) ~url ~json =
     let headers = Cohttp.Header.add headers "Content-Type" "application/json" in
@@ -62,7 +62,7 @@ struct
       Cohttp.Header.add headers
         "Content-Type" "application/x-www-form-urlencoded" in
     let res = Cohttp_lwt_unix.Client.delete ~headers url in
-    res >>= check_response ~expected:[`No_content] >>= fun () -> res
+    res >>= check_response ~expected:[`No_content] >> res
 
   let paginated (parse: Yojson.Safe.json -> 'a list) (url : Uri.t) : 'a Lwt_stream.t =
     let next_url = ref (Some url) in
