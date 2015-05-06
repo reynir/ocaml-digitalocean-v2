@@ -2,12 +2,12 @@ OCAMLBUILD=ocamlbuild -use-ocamlfind
 
 .PHONY: all examples clean
 
-all: main.native _tags
-
-examples: www.native updateA.native
+all: main.native examples _tags
 
 main.native: src/*.ml
 	${OCAMLBUILD} src/main.native
+
+examples: www.native updateA.native
 
 www.native: examples/www.ml
 	${OCAMLBUILD} examples/www.native
