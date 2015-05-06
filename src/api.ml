@@ -26,6 +26,16 @@ struct
          Responses.((or_die droplets_of_yojson json).droplets))
       (mk_url "droplets")
 
+  let images ?typ ?(privat=false) () =
+    let url = match typ with
+      | None -> mk_url ~query:["private", [string_of_bool privat]] ~resource:"images"
+      | Some s -> mk_url ~query:["type", [s]] ~resource:"images"
+        in
+    M.paginated
+      (fun json ->
+         Responses.((or_die images_of_yojson json).images))
+      url
+
   let domains () =
     M.paginated
       (fun json ->

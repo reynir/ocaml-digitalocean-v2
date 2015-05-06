@@ -73,6 +73,22 @@ type droplets = {
   droplets : droplet list;
 } [@@deriving yojson { strict = false }]
 
+type image = {
+  id : number;
+  name : string;
+  typ [@key "type"] : string;
+  distribution : string;
+  slug : string option;
+  public : bool;
+  regions : objekt list;
+  min_disk_size : number;
+  (* created_at : ???; (* UNDOCUMENTED! *) *)
+} [@@deriving yojson { strict = false }]
+
+type images = {
+  images : image list;
+} [@@deriving yojson { strict = false }]
+
 type domain = {
   name : string;
   ttl : number;
