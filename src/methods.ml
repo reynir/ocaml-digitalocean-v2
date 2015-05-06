@@ -15,11 +15,10 @@ let check_response ?expected:(oks=[`OK]) ((resp, body) : Cohttp_lwt_unix.Respons
                                                          * Cohttp_lwt_body.t) =
   let status = Cohttp_lwt_unix.Response.status resp in
   if List.mem status oks
-  then return ()
+  then return_unit
   else let status_string = Cohttp.Code.string_of_status status in
     Printf.fprintf stderr "Error code: %s\n" status_string;
-    json_of_response (resp, body)
-    >>= fun json ->
+    let%lwt json = json_of_response (resp, body) in
     raise @@ Responses.Bad_response
       (Printf.sprintf "Error code %s" status_string,
        json)
@@ -71,9 +70,7 @@ struct
       match !next_url with
       | None -> return_none
       | Some url ->
-        get url
-        >>= json_of_response
-        >>= fun json ->
+        let%lwt json = get url >>= json_of_response in
         let xs = parse json in
         let () = match next_page json with
           | Some new_url -> next_url := Some (Uri.of_string new_url)

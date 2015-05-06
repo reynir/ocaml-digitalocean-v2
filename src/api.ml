@@ -40,32 +40,35 @@ struct
       (mk_url ("domains" / domain / "records"))
 
   let add_CNAME domain_name ~domain ~host =
-    M.post_json (mk_url ("domains" / domain_name / "records"))
-      (`Assoc ["type", `String "CNAME";
-               "name", `String domain;
-               "data", `String host;])
-    >>= M.json_of_response
-    >|= fun json ->
+    let%lwt json =
+      M.post_json (mk_url ("domains" / domain_name / "records"))
+        (`Assoc ["type", `String "CNAME";
+                 "name", `String domain;
+                 "data", `String host;])
+      >>= M.json_of_response in
     Responses.((or_die domain_record_wrapper_of_yojson json).domain_record)
     |> Records.record_of_domain_record
+    |> Lwt.return
 
   let add_A domain_name ~domain ~address =
-    M.post_json (mk_url ("domains" / domain_name / "records"))
-      (`Assoc ["type", `String "A";
-               "name", `String domain;
-               "data", `String address;])
-    >>= M.json_of_response
-    >|= fun json ->
+    let%lwt json =
+      M.post_json (mk_url ("domains" / domain_name / "records"))
+        (`Assoc ["type", `String "A";
+                 "name", `String domain;
+                 "data", `String address;])
+      >>= M.json_of_response in
     Responses.((or_die domain_record_wrapper_of_yojson json).domain_record)
     |> Records.record_of_domain_record
+    |> Lwt.return
 
   let update_record_data domain_name id data =
-    M.put_json (mk_url ("domains" / domain_name / "records" / string_of_int id))
-      (`Assoc ["data", `String data])
-    >>= M.json_of_response
-    >|= fun json ->
+    let%lwt json =
+      M.put_json (mk_url ("domains" / domain_name / "records" / string_of_int id))
+        (`Assoc ["data", `String data])
+      >>= M.json_of_response in
     Responses.((or_die domain_record_wrapper_of_yojson json).domain_record)
     |> Records.record_of_domain_record
+    |> Lwt.return
 
   let delete_record domain_name id =
     M.delete (mk_url ("domains" / domain_name / "records" / string_of_int id))

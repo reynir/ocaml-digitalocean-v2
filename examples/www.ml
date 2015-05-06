@@ -9,13 +9,10 @@ let is_www = function
   | _ -> false
 
 let do_add domain_name : unit Lwt.t =
-  DO.domain_records domain_name
-  |> Lwt_stream.to_list
-  >>= fun records ->
+  let%lwt records = DO.domain_records domain_name |> Lwt_stream.to_list in
   if List.exists is_www records
   then Lwt_io.printl ("Domain "^domain_name^" has www!")
-  else  DO.add_CNAME domain_name ~domain:"www" ~host:"@"
-    >>= fun _ ->
+  else let%lwt _ = DO.add_CNAME domain_name ~domain:"www" ~host:"@" in
     Lwt_io.printl ("Www added to "^domain_name^"!")
 
 let do_remove domain_name : unit Lwt.t =
@@ -26,10 +23,9 @@ let do_remove domain_name : unit Lwt.t =
       | Records.A {Records.domain = "www"; id; _ } ->
         Lwt_io.printl ("Www exists for "^domain_name^"! Removing...")
         >>= fun () ->
-        DO.delete_record domain_name id
-        >>= fun _ ->
-        return ()
-      | _ -> return ())
+        let%lwt _ = DO.delete_record domain_name id in
+        return_unit
+      | _ -> return_unit)
 
 let do_all f : unit Lwt.t =
   DO.domains ()

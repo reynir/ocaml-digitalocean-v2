@@ -1,4 +1,4 @@
-true: package(cohttp.lwt,yojson,ppx_deriving,ppx_deriving_yojson,ppx_deriving.show)
+true: package(cohttp.lwt,yojson,ppx_deriving,ppx_deriving_yojson,ppx_deriving.show,lwt.ppx)
 true: bin_annot
 "src/util.ml": package(lwt.ppx)
 <examples/*>: package(cmdliner)

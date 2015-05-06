@@ -34,7 +34,7 @@ let main : unit Lwt.t =
   DO.domains ()
   |> Lwt_stream.get
   >>= begin function
-    | None ->return ()
+    | None -> return_unit
     | Some { Responses.name; _ } -> 
       print_domain_records name
   end
