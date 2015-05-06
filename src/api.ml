@@ -49,6 +49,13 @@ struct
          |> List.map Records.record_of_domain_record)
       (mk_url ("domains" / domain / "records"))
 
+  let add_domain domain address =
+    let data = `Assoc ["name", `String domain; "ip_address", `String address] in
+    M.post_json (mk_url "domains") data
+
+  let delete_domain domain =
+    M.delete (mk_url ("domains"/domain))
+
   let add_CNAME domain_name ~domain ~host =
     let data = `Assoc ["type", `String "CNAME";
                        "name", `String domain;
