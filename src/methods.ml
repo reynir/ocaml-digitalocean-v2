@@ -29,48 +29,49 @@ struct
 
   let json_of_response = json_of_response
 
-  let get ?headers:(headers=Cohttp.Header.init ()) ~url =
+  let get ?expected ?headers:(headers=Cohttp.Header.init ()) ~url =
     let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
     let res = Cohttp_lwt_unix.Client.get ~headers url in
-    res >>= check_response >> res
+    res >>= check_response ?expected >> res >>= json_of_response
 
-  let post ?headers:(headers=Cohttp.Header.init ()) ~url ~data =
+  let post ?(expected=[`Created]) ?headers:(headers=Cohttp.Header.init ()) ~url ~data =
     let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
     let body = Cohttp_lwt_body.of_string data in
     let res = Cohttp_lwt_unix.Client.post ~body ~headers url in
-    res >>= check_response ~expected:[`Created] >> res
+    res >>= check_response ~expected >> res >>= json_of_response
 
-  let post_json ?headers:(headers=Cohttp.Header.init ()) ~url ~json =
+  let post_json ?expected ?headers:(headers=Cohttp.Header.init ()) ~url ~json =
     let headers = Cohttp.Header.add headers "Content-Type" "application/json" in
     let data = Yojson.Safe.to_string json in
-    post ~headers ~url ~data
+    post ?expected ~headers ~url ~data
 
-  let put ?headers:(headers=Cohttp.Header.init ()) ~url ~data =
+  let put ?expected ?headers:(headers=Cohttp.Header.init ()) ~url ~data =
     let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
     let body = Cohttp_lwt_body.of_string data in
     let res = Cohttp_lwt_unix.Client.put ~body ~headers url in
-    res >>= check_response >> res
+    res >>= check_response ?expected >> res >>= json_of_response
 
-  let put_json ?headers:(headers=Cohttp.Header.init ()) ~url ~json =
+  let put_json ?expected ?headers:(headers=Cohttp.Header.init ()) ~url ~json =
     let headers = Cohttp.Header.add headers "Content-Type" "application/json" in
     let data = Yojson.Safe.to_string json in
-    put ~headers ~url ~data
+    put ?expected ~headers ~url ~data
 
-  let delete ?headers:(headers=Cohttp.Header.init ()) ~url =
+  let delete ?(expected=[`No_content]) ?headers:(headers=Cohttp.Header.init ()) ~url =
     let headers = Cohttp.Header.add headers "Authorization" ("Bearer "^token) in
     let headers =
       Cohttp.Header.add headers
         "Content-Type" "application/x-www-form-urlencoded" in
     let res = Cohttp_lwt_unix.Client.delete ~headers url in
-    res >>= check_response ~expected:[`No_content] >> res
+    res >>= check_response ~expected
 
-  let paginated (parse: Yojson.Safe.json -> 'a list) (url : Uri.t) : 'a Lwt_stream.t =
+  let paginated ?expected ?headers (parse: Yojson.Safe.json -> 'a list) (url : Uri.t)
+    : 'a Lwt_stream.t =
     let next_url = ref (Some url) in
     let next () : 'a list option Lwt.t =
       match !next_url with
       | None -> return_none
       | Some url ->
-        let%lwt json = get url >>= json_of_response in
+        let%lwt json = get ?expected ?headers ~url in
         let xs = parse json in
         let () = match next_page json with
           | Some new_url -> next_url := Some (Uri.of_string new_url)

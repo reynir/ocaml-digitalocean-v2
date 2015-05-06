@@ -50,32 +50,29 @@ struct
       (mk_url ("domains" / domain / "records"))
 
   let add_CNAME domain_name ~domain ~host =
-    let%lwt json =
-      M.post_json (mk_url ("domains" / domain_name / "records"))
-        (`Assoc ["type", `String "CNAME";
-                 "name", `String domain;
-                 "data", `String host;])
-      >>= M.json_of_response in
+    let data = `Assoc ["type", `String "CNAME";
+                       "name", `String domain;
+                       "data", `String host;] in
+    let url = mk_url ("domains" / domain_name / "records") in
+    let%lwt json = M.post_json url data in
     Responses.((or_die domain_record_wrapper_of_yojson json).domain_record)
     |> Records.record_of_domain_record
     |> Lwt.return
 
   let add_A domain_name ~domain ~address =
-    let%lwt json =
-      M.post_json (mk_url ("domains" / domain_name / "records"))
-        (`Assoc ["type", `String "A";
-                 "name", `String domain;
-                 "data", `String address;])
-      >>= M.json_of_response in
+    let data = `Assoc ["type", `String "A";
+                       "name", `String domain;
+                       "data", `String address;] in
+    let url = (mk_url ("domains" / domain_name / "records")) in
+    let%lwt json = M.post_json url data in
     Responses.((or_die domain_record_wrapper_of_yojson json).domain_record)
     |> Records.record_of_domain_record
     |> Lwt.return
 
   let update_record_data domain_name id data =
-    let%lwt json =
-      M.put_json (mk_url ("domains" / domain_name / "records" / string_of_int id))
-        (`Assoc ["data", `String data])
-      >>= M.json_of_response in
+    let%lwt json = M.put_json
+        (mk_url ("domains" / domain_name / "records" / string_of_int id))
+        (`Assoc ["data", `String data])  in
     Responses.((or_die domain_record_wrapper_of_yojson json).domain_record)
     |> Records.record_of_domain_record
     |> Lwt.return
