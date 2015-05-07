@@ -13,6 +13,8 @@ module Make (Token : Token.AUTH_TOKEN) =
 struct
   module M = Methods.Make(Token)
 
+  (******** Account ********)
+
   (******** Actions ********)
 
   let actions () : Responses.action Lwt_stream.t =
