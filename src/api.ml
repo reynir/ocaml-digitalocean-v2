@@ -62,7 +62,18 @@ struct
     let data = `Assoc ["type", `String "A";
                        "name", `String domain;
                        "data", `String address;] in
-    let url = (mk_url ("domains" / domain_name / "records")) in
+    let url = mk_url ("domains" / domain_name / "records") in
+    let%lwt json = M.post_json url data in
+    Responses.((or_die domain_record_wrapper_of_yojson json).domain_record)
+    |> Records.record_of_domain_record
+    |> Lwt.return
+
+  let add_MX domain_name ~domain ~exchange ~priority =
+    let data : Yojson.Safe.json = `Assoc ["type", `String "MX";
+                       "name", `String domain;
+                       "data", `String exchange;
+                       "priority", `Int priority] in
+    let url = mk_url ("domains" / domain_name / "records") in
     let%lwt json = M.post_json url data in
     Responses.((or_die domain_record_wrapper_of_yojson json).domain_record)
     |> Records.record_of_domain_record
