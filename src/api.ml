@@ -13,6 +13,8 @@ module Make (Token : Token.AUTH_TOKEN) =
 struct
   module M = Methods.Make(Token)
 
+  (******** Actions ********)
+
   let actions () : Responses.action Lwt_stream.t =
     M.paginated (fun json ->
         Responses.((or_die actions_of_yojson json).actions))
@@ -20,21 +22,7 @@ struct
 
   let actions_list () = Lwt_stream.to_list (actions ())
 
-  let droplets () =
-    M.paginated
-      (fun json ->
-         Responses.((or_die droplets_of_yojson json).droplets))
-      (mk_url "droplets")
-
-  let images ?typ ?(privat=false) () =
-    let query = ("private", [string_of_bool privat]) ::
-                match typ with
-                | None -> []
-                | Some s -> ["type", [s]] in
-    M.paginated
-      (fun json ->
-         Responses.((or_die images_of_yojson json).images))
-      (mk_url ~query ~resource:"images")
+  (******** Domains ********)
 
   let domains () =
     M.paginated
@@ -42,19 +30,21 @@ struct
          Responses.((or_die domains_of_yojson json).domains))
       (mk_url "domains")
 
-  let domain_records (domain : string)  =
-    M.paginated
-      (fun json ->
-         Responses.((or_die domain_records_of_yojson json).domain_records)
-         |> List.map Records.record_of_domain_record)
-      (mk_url ("domains" / domain / "records"))
-
   let add_domain domain address =
     let data = `Assoc ["name", `String domain; "ip_address", `String address] in
     M.post_json (mk_url "domains") data
 
   let delete_domain domain =
     M.delete (mk_url ("domains"/domain))
+
+  (******** Domain records ********)
+
+  let domain_records (domain : string)  =
+    M.paginated
+      (fun json ->
+         Responses.((or_die domain_records_of_yojson json).domain_records)
+         |> List.map Records.record_of_domain_record)
+      (mk_url ("domains" / domain / "records"))
 
   let add_CNAME domain_name ~domain ~host =
     let data = `Assoc ["type", `String "CNAME";
@@ -86,4 +76,35 @@ struct
 
   let delete_record domain_name id =
     M.delete (mk_url ("domains" / domain_name / "records" / string_of_int id))
+
+  (******** Droplets ********)
+
+  let droplets () =
+    M.paginated
+      (fun json ->
+         Responses.((or_die droplets_of_yojson json).droplets))
+      (mk_url "droplets")
+
+  (******** Droplet actions ********)
+
+  (******** Images ********)
+
+  let images ?typ ?(privat=false) () =
+    let query = ("private", [string_of_bool privat]) ::
+                match typ with
+                | None -> []
+                | Some s -> ["type", [s]] in
+    M.paginated
+      (fun json ->
+         Responses.((or_die images_of_yojson json).images))
+      (mk_url ~query ~resource:"images")
+
+  (******** Image actions ********)
+
+  (******** SSH keys ********)
+
+  (******** Regions ********)
+
+  (******** Sizes ********)
+
 end
