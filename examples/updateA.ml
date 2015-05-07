@@ -2,7 +2,7 @@ open Lwt
 
 module DO = Api.Make((val (Lwt_main.run Util.get_token)))
 
-let update verbose domain_name domain address =
+let update verbose domain_name domain address () =
   let verbose_printl = if verbose
     then Lwt_io.printl
     else Lwt.wrap1 ignore in
@@ -37,8 +37,11 @@ let cmd = Cmdliner.Term.(pure update $ verbose $ s 0 "DOMAIN" $ s 1 "NAME" $ s 2
 
 let doc = Cmdliner.Term.info ~doc:"Update an A record" "update"
 
-let () = Cmdliner.Term.eval (cmd, doc)
-         |> function
-         | `Ok main ->
-           Lwt_main.run main
-         | _ -> ()
+let () = match Cmdliner.Term.eval (cmd, doc) with
+  | `Ok main ->
+    Lwt_main.run begin try%lwt
+      main ()
+      with Responses.Bad_response e ->
+        Util.eprintl_bad_response e >> exit 1
+    end
+  | _ -> ()

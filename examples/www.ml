@@ -17,7 +17,7 @@ let do_add domain_name : unit Lwt.t =
 
 let do_remove domain_name : unit Lwt.t =
   DO.domain_records domain_name
-  |> Lwt_stream.iter_p 
+  |> Lwt_stream.iter_p
     (function
       | Records.CNAME { Records.domain = "www"; id; _ }
       | Records.A {Records.domain = "www"; id; _ } ->
@@ -36,7 +36,7 @@ let do_all f : unit Lwt.t =
 let domain_opt =
   Cmdliner.Arg.(value @@ pos_all string [] @@ info [] ~docv:"DOMAIN")
 
-let do_it f (domains : string list) =
+let do_it f (domains : string list) () =
   match domains with
   | [] -> do_all f
   | _ -> Lwt_list.iter_p f domains
@@ -64,7 +64,11 @@ let cmd = Cmdliner.Term.eval_choice
        "remove"]
 
 let () =
-  cmd
-  |> function
-  | `Ok main -> Lwt_main.run main
+  match cmd with
+  | `Ok main ->
+    Lwt_main.run begin try%lwt
+      main ()
+      with Responses.Bad_response e ->
+        Util.eprintl_bad_response e >> exit 1
+    end
   | _ -> ()

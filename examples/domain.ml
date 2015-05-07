@@ -36,9 +36,7 @@ let () =
     Lwt_main.run
       begin try%lwt
         main ()
-        with Responses.Bad_response (err, json) ->
-          Lwt_io.eprintlf "Bad_response: %s" err >>
-          Lwt_io.eprintlf "JSON: %s" (Yojson.Safe.pretty_to_string json) >>
-          exit 1
+        with Responses.Bad_response e ->
+          Util.eprintl_bad_response e >> exit 1
       end
   | _ -> ()
