@@ -1,8 +1,8 @@
 exception Bad_response of (string * Yojson.Safe.json)
 
 let or_die parse json = match parse json with
-  | `Error error_msg -> raise (Bad_response (error_msg, json))
-  | `Ok res -> res
+  | Error error_msg -> raise (Bad_response (error_msg, json))
+  | Ok res -> res
 
 (** Some common types **)
 (* The type 'number' seems to always be an integer *)
@@ -37,7 +37,7 @@ type paginated = {
 type action = {
   id : number;
   status : string;
-  typ [@key "type"] : string;
+  typ : string [@key "type"];
   started_at : string;
   completed_at : string;
   resource_id : number option;
@@ -76,7 +76,7 @@ type droplets = {
 type image = {
   id : number;
   name : string;
-  typ [@key "type"] : string;
+  typ : string [@key "type"];
   distribution : string;
   slug : string option;
   public : bool;
@@ -101,7 +101,7 @@ type domains = {
 
 type domain_record = {
   id : number;
-  typ [@key "type"] : string;
+  typ : string [@key "type"];
   name : string;
   data : string;
   priority : number option;

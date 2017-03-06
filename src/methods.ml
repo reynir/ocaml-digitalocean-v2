@@ -8,8 +8,8 @@ let json_of_response ((resp, body) : Cohttp.Response.t * Cohttp_lwt_body.t)
 let next_page (json : Yojson.Safe.json) : string option =
   let open Responses in
   match paginated_of_yojson json with
-  | `Error _ -> None
-  | `Ok { links = { pages = { next } } } -> next
+  | Error _ -> None
+  | Ok { links = { pages = { next } } } -> next
 
 let check_response ?expected:(oks=[`OK]) ((resp, body) : Cohttp_lwt_unix.Response.t
                                                          * Cohttp_lwt_body.t) =
